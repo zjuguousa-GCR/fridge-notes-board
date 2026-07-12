@@ -14,7 +14,8 @@
       "Bash(npx --yes create-next-app@latest . --ts --tailwind --eslint --app --src-dir=false --import-alias \"@/*\" --use-npm --no-turbopack)",
       "Bash(mkdir -p \"C:\\\\Users\\\\zjugu\\\\FN_C\\\\supabase\")",
       "Bash(git config *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
