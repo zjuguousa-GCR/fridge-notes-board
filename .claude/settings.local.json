@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh auth *)",
+      "Bash(git --version)",
+      "Bash(git -C \"C:\\\\Users\\\\zjugu\\\\FN_C\" status)",
+      "PowerShell($env:PATH = \"$env:PATH;C:\\\\Program Files\\\\GitHub CLI\"; gh --version)",
+      "PowerShell($env:PATH = \"$env:PATH;C:\\\\Program Files\\\\GitHub CLI\"; gh auth login --hostname github.com --git-protocol https --web 2>&1)",
+      "Bash(npm --version)",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "PowerShell(winget install --id OpenJS.NodeJS.LTS --silent --accept-package-agreements --accept-source-agreements)",
+      "PowerShell($env:PATH = [System.Environment]::GetEnvironmentVariable\\(\"PATH\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"PATH\",\"User\"\\); node --version; npm --version)",
+      "Bash(npx --yes create-next-app@latest . --ts --tailwind --eslint --app --src-dir=false --import-alias \"@/*\" --use-npm --no-turbopack)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\zjugu\\\\FN_C\\\\supabase\")",
+      "Bash(git config *)",
+      "Bash(git add *)"
+    ]
+  }
+}
