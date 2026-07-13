@@ -29,6 +29,7 @@ create table public.notes (
     check (color in ('yellow', 'pink', 'blue', 'green', 'purple', 'orange')),
   image_path text,
   expires_at timestamptz,
+  music text,
   created_at timestamptz not null default now(),
   constraint content_or_image check (content is not null or image_path is not null)
 );
@@ -47,6 +48,32 @@ create policy "users insert their own notes"
 
 create policy "users delete only their own notes"
   on public.notes for delete
+  to authenticated
+  using (auth.uid() = author_id);
+
+-- note_replies: small handwritten replies under a note
+create table public.note_replies (
+  id uuid primary key default gen_random_uuid(),
+  note_id uuid not null references public.notes(id) on delete cascade,
+  author_id uuid not null references auth.users(id) on delete cascade,
+  content text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.note_replies enable row level security;
+
+create policy "authenticated users see all replies"
+  on public.note_replies for select
+  to authenticated
+  using (true);
+
+create policy "users insert their own replies"
+  on public.note_replies for insert
+  to authenticated
+  with check (auth.uid() = author_id);
+
+create policy "users delete only their own replies"
+  on public.note_replies for delete
   to authenticated
   using (auth.uid() = author_id);
 

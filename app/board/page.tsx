@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabaseServer'
 import { NoteComposer } from '@/components/NoteComposer'
-import { NoteCard } from '@/components/NoteCard'
+import { NotesBoard, type BoardItem } from '@/components/NotesBoard'
 import { LogoutButton } from '@/components/LogoutButton'
-import type { Note, NoteWithAuthor, Profile } from '@/types/database'
+import type { Note, NoteReply, Profile, ReplyWithAuthor } from '@/types/database'
 
 export default async function BoardPage() {
   const supabase = await createClient()
@@ -26,7 +26,23 @@ export default async function BoardPage() {
     .order('created_at', { ascending: false })
     .returns<Note[]>()
 
-  const authorIds = [...new Set((rawNotes ?? []).map((n) => n.author_id))]
+  // 便签下的回复（数据库尚未运行迁移时表不存在，data 为 null，按无回复处理）
+  const noteIds = (rawNotes ?? []).map((n) => n.id)
+  const { data: rawReplies } = noteIds.length
+    ? await supabase
+        .from('note_replies')
+        .select('*')
+        .in('note_id', noteIds)
+        .order('created_at', { ascending: true })
+        .returns<NoteReply[]>()
+    : { data: [] as NoteReply[] }
+
+  const authorIds = [
+    ...new Set([
+      ...(rawNotes ?? []).map((n) => n.author_id),
+      ...(rawReplies ?? []).map((r) => r.author_id),
+    ]),
+  ]
   const { data: authors } = authorIds.length
     ? await supabase
         .from('profiles')
@@ -36,13 +52,28 @@ export default async function BoardPage() {
     : { data: [] }
 
   const authorById = new Map((authors ?? []).map((a) => [a.id, a]))
-  const notes: NoteWithAuthor[] = (rawNotes ?? []).map((note) => {
+
+  const repliesByNote = new Map<string, ReplyWithAuthor[]>()
+  for (const reply of rawReplies ?? []) {
+    const author = authorById.get(reply.author_id)
+    const list = repliesByNote.get(reply.note_id) ?? []
+    list.push({ ...reply, authorName: author?.display_name ?? author?.username ?? '家人' })
+    repliesByNote.set(reply.note_id, list)
+  }
+
+  const items: BoardItem[] = (rawNotes ?? []).map((note) => {
     const author = authorById.get(note.author_id)
     return {
-      ...note,
-      profiles: author
-        ? { username: author.username, display_name: author.display_name }
+      note: {
+        ...note,
+        profiles: author
+          ? { username: author.username, display_name: author.display_name }
+          : null,
+      },
+      imageUrl: note.image_path
+        ? supabase.storage.from('note-images').getPublicUrl(note.image_path).data.publicUrl
         : null,
+      replies: repliesByNote.get(note.id) ?? [],
     }
   })
 
@@ -55,7 +86,7 @@ export default async function BoardPage() {
           <h1 className="engraved text-lg font-bold tracking-wide sm:text-xl">🧲 家庭留言贴</h1>
           <div className="flex items-center gap-3">
             <span className="led-display rounded-md px-2.5 py-1 font-mono text-xs">
-              {notes.length} 条留言
+              {items.length} 条留言
             </span>
             <span className="hidden text-sm text-zinc-600 sm:inline">
               你好，{profile?.display_name ?? '家人'}
@@ -70,24 +101,7 @@ export default async function BoardPage() {
 
           <NoteComposer />
 
-          <div className="mt-14 grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-            {notes.map((note) => {
-              const imageUrl = note.image_path
-                ? supabase.storage.from('note-images').getPublicUrl(note.image_path).data.publicUrl
-                : null
-
-              return (
-                <NoteCard key={note.id} note={note} imageUrl={imageUrl} currentUserId={user!.id} />
-              )
-            })}
-
-            {notes.length === 0 && (
-              <div className="note-paper col-span-full mx-auto w-full max-w-xs rotate-2 bg-yellow-200 p-6 pt-8 text-center font-note text-xl text-zinc-600">
-                <span className="magnet absolute -top-3.5 left-1/2 h-8 w-8 -translate-x-1/2" />
-                还没有留言，写下第一条吧！
-              </div>
-            )}
-          </div>
+          <NotesBoard items={items} currentUserId={user!.id} />
         </main>
       </div>
     </div>
