@@ -35,7 +35,7 @@ export default function SignupPage() {
 
     setPending(true)
     const supabase = createClient()
-    const email = `${username}@familyboard.local`
+    const email = `${username}@familyboard.app`
 
     const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
 
