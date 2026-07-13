@@ -42,12 +42,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-amber-50 px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-4 rounded-2xl border border-amber-200 bg-white p-8 shadow-sm"
-      >
-        <h1 className="text-2xl font-semibold text-zinc-800">家庭留言贴</h1>
+    <div className="kitchen-wall flex flex-1 items-center justify-center px-4 py-10">
+      <div className="fridge-door brushed-steel w-full max-w-md rounded-3xl px-6 py-12 sm:px-10">
+        <form
+          onSubmit={handleSubmit}
+          className="note-paper mx-auto w-full max-w-sm -rotate-1 space-y-4 bg-yellow-200 p-6 pt-9"
+        >
+          <span className="magnet absolute -top-4 left-1/2 h-9 w-9 -translate-x-1/2" />
+          <h1 className="text-center font-note text-3xl text-zinc-800">🧲 家庭留言贴</h1>
 
         <div className="space-y-1">
           <label htmlFor="username" className="text-sm font-medium text-zinc-600">
@@ -57,7 +59,7 @@ export default function LoginPage() {
             id="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+            className="w-full rounded-md border border-black/10 bg-white/75 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
             required
           />
         </div>
@@ -71,28 +73,29 @@ export default function LoginPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+            className="w-full rounded-md border border-black/10 bg-white/75 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500/60"
             required
           />
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={pending}
-          className="w-full rounded-lg bg-amber-500 py-2 font-medium text-white hover:bg-amber-600 disabled:opacity-50"
-        >
-          {pending ? '登录中…' : '登录'}
-        </button>
+          <button
+            type="submit"
+            disabled={pending}
+            className="magnet-btn w-full rounded-full py-2 font-medium text-white disabled:opacity-50"
+          >
+            {pending ? '登录中…' : '登录'}
+          </button>
 
-        <p className="text-center text-sm text-zinc-500">
-          还没有账号？{' '}
-          <Link href="/signup" className="font-medium text-amber-600">
-            去注册
-          </Link>
-        </p>
-      </form>
+          <p className="text-center text-sm text-zinc-600">
+            还没有账号？{' '}
+            <Link href="/signup" className="font-medium text-red-500 underline underline-offset-2">
+              去注册
+            </Link>
+          </p>
+        </form>
+      </div>
     </div>
   )
 }
