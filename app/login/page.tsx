@@ -18,10 +18,18 @@ export default function LoginPage() {
     setPending(true)
 
     const supabase = createClient()
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: `${username}@familyboard.local`,
+    let { error: signInError } = await supabase.auth.signInWithPassword({
+      email: `${username}@familyboard.app`,
       password,
     })
+
+    // 兼容邮箱域名从 familyboard.local 改为 familyboard.app 之前注册的老账号
+    if (signInError) {
+      ;({ error: signInError } = await supabase.auth.signInWithPassword({
+        email: `${username}@familyboard.local`,
+        password,
+      }))
+    }
 
     if (signInError) {
       setError('用户名或密码不正确')
