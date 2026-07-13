@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabaseServer'
 import { NoteComposer } from '@/components/NoteComposer'
 import { NoteCard } from '@/components/NoteCard'
 import { LogoutButton } from '@/components/LogoutButton'
-import type { NoteWithAuthor } from '@/types/database'
+import type { Note, NoteWithAuthor, Profile } from '@/types/database'
 
 export default async function BoardPage() {
   const supabase = await createClient()
@@ -17,12 +17,34 @@ export default async function BoardPage() {
     .eq('id', user!.id)
     .single()
 
-  const { data: notes } = await supabase
+  // notes.author_id 的外键指向 auth.users 而非 profiles，无法用 PostgREST 关联查询，
+  // 因此分两次查询后在这里合并作者信息。
+  const { data: rawNotes } = await supabase
     .from('notes')
-    .select('*, profiles(username, display_name)')
+    .select('*')
     .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
     .order('created_at', { ascending: false })
-    .returns<NoteWithAuthor[]>()
+    .returns<Note[]>()
+
+  const authorIds = [...new Set((rawNotes ?? []).map((n) => n.author_id))]
+  const { data: authors } = authorIds.length
+    ? await supabase
+        .from('profiles')
+        .select('id, username, display_name')
+        .in('id', authorIds)
+        .returns<Pick<Profile, 'id' | 'username' | 'display_name'>[]>()
+    : { data: [] }
+
+  const authorById = new Map((authors ?? []).map((a) => [a.id, a]))
+  const notes: NoteWithAuthor[] = (rawNotes ?? []).map((note) => {
+    const author = authorById.get(note.author_id)
+    return {
+      ...note,
+      profiles: author
+        ? { username: author.username, display_name: author.display_name }
+        : null,
+    }
+  })
 
   return (
     <div className="min-h-full flex-1 bg-amber-50 pb-16">
@@ -38,7 +60,7 @@ export default async function BoardPage() {
         <NoteComposer />
 
         <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {notes?.map((note) => {
+          {notes.map((note) => {
             const imageUrl = note.image_path
               ? supabase.storage.from('note-images').getPublicUrl(note.image_path).data.publicUrl
               : null
@@ -48,7 +70,7 @@ export default async function BoardPage() {
             )
           })}
 
-          {notes?.length === 0 && (
+          {notes.length === 0 && (
             <p className="col-span-full text-center text-zinc-400">
               还没有留言，写下第一条吧！
             </p>
